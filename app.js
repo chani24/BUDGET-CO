@@ -134,9 +134,33 @@ var UIController = (function(){
     budgetLabel: '.budget__value',
     incomeLabel: '.inc-label',
     expensesLabel: '.exp-label',
-    container:'.left-side'
+    container:'.left-side',
+    month: '.current-month'
 
   };
+
+  var formatNumber= function(num, type){
+    var numSplit, int, dec;
+  //  + or - before the number, 2 decimal places and comma seperating the thousands
+
+    num = Math.abs(num);
+    num = num.toFixed(2);
+    numSplit = num.split('.');
+
+    int = numSplit[0];
+    if(int.length > 3){
+    int =  int.substr(0, int.length - 3) + ',' + int.substr(int.length - 3, int.length)
+    }
+
+   dec = numSplit[1];
+
+    return (type === 'exp' ? '-': '+')+''+ int +'.'+ dec;
+  };
+
+  var nodeListForEach = function(list, callback) {
+      for (var i = 0; i < list.length; i++) {
+          callback(list[i], i);
+      }};
 
   //some code
   return {
@@ -164,7 +188,7 @@ var UIController = (function(){
 
       newHtml = html.replace('%id%', obj.id);
       newHtml = newHtml.replace('%description%', obj.description);
-      newHtml = newHtml.replace('%value%', obj.value);
+      newHtml = newHtml.replace('%value%', formatNumber(obj.value, type));
 
 
       //insert the HTML into the DOM
@@ -193,19 +217,52 @@ var UIController = (function(){
   },
 
   displayBudget: function(obj){
+    var type;
 
-    document.querySelector(DOMstrings.budgetLabel).textContent = obj.budget;
-    document.querySelector(DOMstrings.incomeLabel).textContent = obj.totalInc;
-    document.querySelector(DOMstrings.expensesLabel).textContent = obj.totalExp;
+    obj.budget > 0 ? type = 'inc': type = 'exp';
+
+    document.querySelector(DOMstrings.budgetLabel).textContent = formatNumber(obj.budget, type);
+    document.querySelector(DOMstrings.incomeLabel).textContent = formatNumber(obj.totalInc, 'inc');
+    document.querySelector(DOMstrings.expensesLabel).textContent = formatNumber(obj.totalExp, 'exp');
 
 
   },
 
+  displayMonth : function(){
+    var now, year, month, months;
 
-    getDOMstrings: function(){
-      return DOMstrings;
-    }
-  };
+    var now = new Date();
+
+    year = now.getFullYear();
+    months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+    month = now.getMonth();
+
+    document.querySelector(DOMstrings.month).textContent = months[month] +' ' + year;
+  },
+
+
+  changedType: function() {
+
+            var fields = document.querySelectorAll(
+                DOMstrings.inputType + ',' +
+                DOMstrings.inputDescription + ',' +
+                DOMstrings.inputValue);
+
+            nodeListForEach(fields, function(cur) {
+               cur.classList.toggle('red-focus');
+            });
+
+            document.querySelector(DOMstrings.inputBtn).classList.toggle('red');
+
+        },
+
+
+        getDOMstrings: function() {
+            return DOMstrings;
+        }
+    };
+
 })();
 
 
@@ -227,6 +284,7 @@ var setupEventListeners = function() {
 
   document.querySelector(DOM.container).addEventListener('click', ctrlDeleteItem);
 
+  document.querySelector(DOM.inputType).addEventListener('click', UICtrl.changedType);
 };
 
 
@@ -266,6 +324,8 @@ var setupEventListeners = function() {
     //4 calculate the budget
     updateBudget();
 
+
+
   }
   };
 
@@ -297,6 +357,7 @@ var setupEventListeners = function() {
     init: function(){
       console.log('Application don start');
       setupEventListeners();
+      UICtrl.displayMonth();
     }
   };
 
